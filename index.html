@@ -6705,5 +6705,71 @@ requestAnimationFrame(
 
 </script>
 
+
+<!-- ============================================================
+     FIREBASE
+     ============================================================ -->
+
+<script type="module">
+
+import { initializeApp }
+    from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+
+import { getFirestore }
+    from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+
+
+const firebaseConfig = {
+
+    apiKey:
+        "AIzaSyDzXMbiU_o7LkOXhsfqWEIk-XDEtkg2j-Q",
+
+    authDomain:
+        "neoedit-1.firebaseapp.com",
+
+    projectId:
+        "neoedit-1",
+
+    storageBucket:
+        "neoedit-1.firebasestorage.app",
+
+    messagingSenderId:
+        "395533027306",
+
+    appId:
+        "1:395533027306:web:b7c0453cac7aa770bed493",
+
+    measurementId:
+        "G-1STL51VC0E"
+};
+
+
+const app =
+    initializeApp(
+        firebaseConfig
+    );
+
+
+const db =
+    getFirestore(
+        app
+    );
+
+
+/*
+   Udostępniamy Firebase
+   głównemu kodowi NeoMaker.
+*/
+
+window.firebaseDB =
+    db;
+
+
+console.log(
+    "Firebase połączony!"
+);
+
+</script>
+
 </body>
 </html>
