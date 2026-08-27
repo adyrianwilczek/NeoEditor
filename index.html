@@ -7174,12 +7174,837 @@ document
     enterGameByCode
 );
 
+/* ============================================================
+   EXTERNAL GAME + DID YOU KNOW
+   NeoMaker
+   ============================================================ */
+
+
+/* ============================================================
+   EXTERNAL GAME STATE
+   ============================================================ */
+
+/*
+   Zapamiętujemy poziom, który użytkownik miał otwarty
+   w edytorze przed użyciem Enter Game.
+*/
+
+let editorLevelBackup = null;
+
+let playingExternalGame = false;
+
+
+/* ============================================================
+   DID YOU KNOW
+   ============================================================ */
+
+const didYouKnowFacts = [
+
+    "Czy wiesz, że Lucky Block może dać Ci aż 5 monet?",
+
+    "Czy wiesz, że możesz pokonać wroga, skacząc na niego?",
+
+    "Czy wiesz, że checkpoint pozwala odrodzić się w dalszej części poziomu?",
+
+    "Czy wiesz, że sprężyna wyrzuca gracza wyżej niż zwykły skok?",
+
+    "Czy wiesz, że możesz tworzyć własne poziomy w NeoMaker?",
+
+    "Czy wiesz, że poziomy można publikować i udostępniać za pomocą kodu?",
+
+    "Czy wiesz, że kod opublikowanej gry pozwala innym graczom ją uruchomić?",
+
+    "Czy wiesz, że możesz używać A i D do poruszania się?",
+
+    "Czy wiesz, że SPACE służy do skakania?",
+
+    "EENWIZD ąs ułyt do ytsket eż ,zseiw yzC",
+
+    "Czy wiesz że, pierwsza gra nazywa sie 'gra' i jej kod to 'TTG6CC'
+
+    "Czy wiesz, że możesz dodawać monety do swoich poziomów?",
+
+    "Czy wiesz, że Meta kończy poziom po jej dotknięciu?",
+
+    "Czy wiesz, że w NeoMaker możesz używać wody jako przeszkody?",
+
+    "Czy wiesz, że możesz powiększać i pomniejszać widok edytora?",
+
+    "Czy wiesz, że NeoMaker ma własny system Lucky Blocków?",
+
+    "Czy wiesz, że możesz stworzyć poziom praktycznie dowolnej długości?",
+
+    "Czy wiesz, że możesz zapisać swój projekt jako plik .ngm?",
+
+    "Czy wiesz, że możesz później wczytać zapisany projekt?",
+
+    "Czy wiesz, że przeciwnicy potrafią zawracać przed krawędzią platformy?",
+
+    "Czy wiesz, że monety zebrane podczas gry zwiększają wynik?",
+
+    "Czy wiesz, że poziom może mieć wielu przeciwników?"
+];
+
+
+let didYouKnowTimer = null;
+
+let lastDidYouKnow = -1;
+
+
+/* ============================================================
+   DID YOU KNOW ELEMENT
+   ============================================================ */
+
+function createDidYouKnow(){
+
+    if(
+        document.getElementById(
+            "didYouKnow"
+        )
+    )
+        return;
+
+
+    const el =
+        document.createElement(
+            "div"
+        );
+
+
+    el.id =
+        "didYouKnow";
+
+
+    el.innerHTML = `
+        <div class="didYouKnowTitle">
+            💡 CZY WIESZ, ŻE...
+        </div>
+
+        <div
+            id="didYouKnowText"
+            class="didYouKnowText"
+        ></div>
+    `;
+
+
+    document
+    .getElementById(
+        "center"
+    )
+    .appendChild(
+        el
+    );
+
+
+    const style =
+        document.createElement(
+            "style"
+        );
+
+
+    style.textContent = `
+
+        #didYouKnow{
+
+            position:absolute;
+
+            left:50%;
+
+            bottom:65px;
+
+            transform:
+                translateX(-50%)
+                translateY(20px);
+
+            width:min(
+                520px,
+                calc(100% - 30px)
+            );
+
+            background:
+                rgba(12,17,26,.92);
+
+            border:
+                1px solid #43536d;
+
+            border-radius:
+                12px;
+
+            padding:
+                13px 17px;
+
+            box-shadow:
+                0 12px 40px
+                rgba(0,0,0,.35);
+
+            opacity:0;
+
+            pointer-events:none;
+
+            transition:
+                opacity .35s,
+                transform .35s;
+
+            z-index:45;
+
+        }
+
+
+        #didYouKnow.show{
+
+            opacity:1;
+
+            transform:
+                translateX(-50%)
+                translateY(0);
+
+        }
+
+
+        .didYouKnowTitle{
+
+            font-size:11px;
+
+            font-weight:900;
+
+            color:#65c7ff;
+
+            margin-bottom:5px;
+
+            letter-spacing:.5px;
+
+        }
+
+
+        .didYouKnowText{
+
+            font-size:14px;
+
+            line-height:1.4;
+
+            color:white;
+
+        }
+
+    `;
+
+
+    document.head.appendChild(
+        style
+    );
+}
+
+
+/* ============================================================
+   SHOW RANDOM FACT
+   ============================================================ */
+
+function showDidYouKnow(){
+
+    if(
+        !playingExternalGame
+    )
+        return;
+
+
+    createDidYouKnow();
+
+
+    const el =
+        document.getElementById(
+            "didYouKnow"
+        );
+
+
+    const text =
+        document.getElementById(
+            "didYouKnowText"
+        );
+
+
+    let index;
+
+
+    do{
+
+        index =
+            Math.floor(
+                Math.random() *
+                didYouKnowFacts.length
+            );
+
+    }while(
+        index === lastDidYouKnow &&
+        didYouKnowFacts.length > 1
+    );
+
+
+    lastDidYouKnow =
+        index;
+
+
+    text.textContent =
+        didYouKnowFacts[index];
+
+
+    el.classList.add(
+        "show"
+    );
+
+
+    clearTimeout(
+        didYouKnowTimer
+    );
+
+
+    didYouKnowTimer =
+        setTimeout(
+            () => {
+
+                el.classList.remove(
+                    "show"
+                );
+
+            },
+            15000
+        );
+}
+
+
+/* ============================================================
+   START DID YOU KNOW LOOP
+   ============================================================ */
+
+function startDidYouKnow(){
+
+    createDidYouKnow();
+
+
+    clearTimeout(
+        didYouKnowTimer
+    );
+
+
+    /*
+       Pierwsza ciekawostka pojawia się
+       chwilę po rozpoczęciu gry.
+    */
+
+    setTimeout(
+        () => {
+
+            if(
+                playingExternalGame
+            ){
+
+                showDidYouKnow();
+
+            }
+
+        },
+        1200
+    );
+}
+
+
+/* ============================================================
+   STOP DID YOU KNOW
+   ============================================================ */
+
+function stopDidYouKnow(){
+
+    clearTimeout(
+        didYouKnowTimer
+    );
+
+
+    const el =
+        document.getElementById(
+            "didYouKnow"
+        );
+
+
+    if(el){
+
+        el.classList.remove(
+            "show"
+        );
+    }
+}
+
+
+/* ============================================================
+   SAVE EDITOR LEVEL
+   ============================================================ */
+
+function backupEditorLevel(){
+
+    editorLevelBackup =
+        JSON.parse(
+            JSON.stringify(
+                level
+            )
+        );
+}
+
+
+/* ============================================================
+   RESTORE EDITOR LEVEL
+   ============================================================ */
+
+function restoreEditorLevel(){
+
+    if(
+        !editorLevelBackup
+    )
+        return;
+
+
+    level =
+        JSON.parse(
+            JSON.stringify(
+                editorLevelBackup
+            )
+        );
+
+
+    editorLevelBackup =
+        null;
+
+
+    selectedObject =
+        null;
+
+
+    updateStats();
+
+    updateSelectedUI();
+}
+
+
+/* ============================================================
+   ENTER EXTERNAL GAME
+   ============================================================ */
+
+async function enterExternalGame(){
+
+    if(
+        !window.neoFirebase
+    ){
+
+        toast(
+            "Łączenie z Firebase..."
+        );
+
+
+        await new Promise(
+            resolve => {
+
+                window.addEventListener(
+                    "neoFirebaseReady",
+                    resolve,
+                    {
+                        once:true
+                    }
+                );
+
+            }
+        );
+    }
+
+
+    const code =
+        prompt(
+            "Wpisz kod gry:"
+        );
+
+
+    if(!code)
+        return;
+
+
+    const cleanCode =
+        code
+        .trim()
+        .toUpperCase();
+
+
+    if(
+        !/^[A-Z0-9]{6}$/.test(
+            cleanCode
+        )
+    ){
+
+        toast(
+            "Nieprawidłowy kod gry"
+        );
+
+        return;
+    }
+
+
+    toast(
+        "Wczytywanie gry..."
+    );
+
+
+    try{
+
+        const snapshot =
+            await window.neoFirebase.getDoc(
+
+                window.neoFirebase.doc(
+                    window.neoFirebase.db,
+                    "games",
+                    cleanCode
+                )
+
+            );
+
+
+        if(
+            !snapshot.exists()
+        ){
+
+            toast(
+                "Nie znaleziono gry"
+            );
+
+            return;
+        }
+
+
+        const data =
+            snapshot.data();
+
+
+        if(
+            !data.level
+        ){
+
+            toast(
+                "Ta gra jest uszkodzona"
+            );
+
+            return;
+        }
+
+
+        /*
+           NAJWAŻNIEJSZA CZĘŚĆ.
+
+           Najpierw zapamiętujemy Twój edytor.
+        */
+
+        backupEditorLevel();
+
+
+        /*
+           Dopiero teraz podstawiamy poziom
+           pobrany z Firebase.
+        */
+
+        level =
+            JSON.parse(
+                JSON.stringify(
+                    data.level
+                )
+            );
+
+
+        playingExternalGame =
+            true;
+
+
+        selectedObject =
+            null;
+
+
+        updateStats();
+
+        updateSelectedUI();
+
+
+        /*
+           Uruchamiamy normalny tryb gry.
+        */
+
+        enterPlay();
+
+
+        /*
+           Enter Play ustawia playera na spawn
+           aktualnie załadowanego poziomu.
+        */
+
+        startDidYouKnow();
+
+
+        toast(
+            "🎮 "+
+            (
+                data.name ||
+                "Gra"
+            )
+        );
+
+
+    }catch(error){
+
+        console.error(
+            "Enter Game error:",
+            error
+        );
+
+
+        toast(
+            "Błąd podczas wczytywania gry"
+        );
+    }
+}
+
+
+/* ============================================================
+   RETURN TO EDITOR
+   ============================================================ */
+
+function returnFromExternalGame(){
+
+    stopDidYouKnow();
+
+
+    /*
+       Najpierw wychodzimy z trybu zewnętrznej gry.
+    */
+
+    playingExternalGame =
+        false;
+
+
+    /*
+       Przywracamy dokładnie ten poziom,
+       który był otwarty przed Enter Game.
+    */
+
+    restoreEditorLevel();
+
+
+    /*
+       Teraz normalny edytor.
+    */
+
+    enterEditor();
+
+
+    updateStats();
+
+    updateSelectedUI();
+
+
+    toast(
+        "✏ Powrócono do edytora"
+    );
+}
+
+
+/* ============================================================
+   REPLACE ENTER GAME BUTTON
+   ============================================================ */
+
+const oldEnterGameButton =
+    document.getElementById(
+        "enterGameBtn"
+    );
+
+
+if(
+    oldEnterGameButton
+){
+
+    /*
+       Usuwamy stare event listenery
+       przez stworzenie jego kopii.
+    */
+
+    const newEnterGameButton =
+        oldEnterGameButton.cloneNode(
+            true
+        );
+
+
+    oldEnterGameButton.parentNode.replaceChild(
+        newEnterGameButton,
+        oldEnterGameButton
+    );
+
+
+    newEnterGameButton.addEventListener(
+        "click",
+        enterExternalGame
+    );
+}
+
+
+/* ============================================================
+   PATCH ENTER EDITOR
+   ============================================================ */
+
+/*
+   Zapamiętujemy oryginalną funkcję.
+*/
+
+const originalEnterEditor =
+    enterEditor;
+
+
+enterEditor =
+function(){
+
+    /*
+       Jeśli jesteśmy w cudzej grze,
+       NIE pozwalamy wejść do jej poziomu
+       jako do edytora.
+    */
+
+    if(
+        playingExternalGame
+    ){
+
+        returnFromExternalGame();
+
+        return;
+    }
+
+
+    originalEnterEditor();
+
+};
+
+
+/* ============================================================
+   PATCH ESCAPE
+   ============================================================ */
+
+window.addEventListener(
+    "keydown",
+    e => {
+
+        if(
+            e.key === "Escape" &&
+            !editorMode &&
+            playingExternalGame
+        ){
+
+            e.preventDefault();
+
+            returnFromExternalGame();
+
+        }
+
+    }
+);
+
+
+/* ============================================================
+   PATCH EDITOR BUTTON
+   ============================================================ */
+
+const editorButton =
+    document.getElementById(
+        "editorBtn"
+    );
+
+
+if(
+    editorButton
+){
+
+    editorButton.addEventListener(
+        "click",
+        () => {
+
+            if(
+                playingExternalGame
+            ){
+
+                returnFromExternalGame();
+
+            }
+
+        }
+    );
+
+}
+
+
+/* ============================================================
+   EXTERNAL GAME SAFETY
+   ============================================================ */
+
+/*
+   Jeżeli ktoś uruchomi zwykłe "Graj"
+   ze swojego edytora, nie traktujemy tego
+   jako gry z Firebase.
+*/
+
+const originalEnterPlay =
+    enterPlay;
+
+
+enterPlay =
+function(){
+
+    originalEnterPlay();
+
+
+    if(
+        playingExternalGame
+    ){
+
+        startDidYouKnow();
+
+    }
+
+};
+
+
+/* ============================================================
+   CLEANUP WHEN RETURNING TO EDITOR
+   ============================================================ */
+
+const originalRestartGame =
+    restartGame;
+
+
+restartGame =
+function(){
+
+    originalRestartGame();
+
+
+    if(
+        playingExternalGame
+    ){
+
+        /*
+           Gra z Firebase może być restartowana
+           bez utraty kopii edytora.
+        */
+
+        startDidYouKnow();
+
+    }
+
+};
+
 
 /* ============================================================
    INITIALIZATION
    ============================================================ */
 
 createDefaultLevel();
+
+createDidYouKnow();
 
 updateHUD();
 
