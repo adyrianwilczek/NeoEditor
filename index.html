@@ -470,7 +470,7 @@ textarea{
         </div>
 
         <button class="topButton" id="newBtn">
-            Nowy
+            + Nowy
         </button>
 
         <button class="topButton" id="saveBtn">
@@ -483,6 +483,14 @@ textarea{
 
         <button class="topButton orange" id="exportGameBtn">
             🎮 Pobierz grę
+        </button>
+
+        <button class="topButton green" id="publishGameBtn">
+           📢 Publikuj grę
+        </button>
+
+        <button class="topButton" id="enterGameBtn">
+           🎮 Enter Game
         </button>
 
         <button class="topButton green" id="playBtn">
@@ -6685,6 +6693,486 @@ function drawPlay(){
         drawPlayer();
     }
 }
+
+    /* ============================================================
+   FIREBASE - PUBLIC GAME SYSTEM
+   ============================================================ */
+
+const firebaseConfig = {
+    apiKey: "AIzaSyDzXMbiU_o7LkOXhsfqWEIk-XDEtkg2j-Q",
+    authDomain: "neoedit-1.firebaseapp.com",
+    projectId: "neoedit-1",
+    storageBucket: "neoedit-1.firebasestorage.app",
+    messagingSenderId: "395533027306",
+    appId: "1:395533027306:web:b7c0453cac7aa770bed493",
+    measurementId: "G-1STL51VC0E"
+};
+
+
+/*
+   Firebase jest ładowany dynamicznie,
+   więc nie trzeba przebudowywać całego GUI.
+*/
+
+const firebaseScript = document.createElement("script");
+
+firebaseScript.type = "module";
+
+firebaseScript.textContent = `
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+import {
+    getFirestore,
+    doc,
+    setDoc,
+    getDoc
+} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+
+const firebaseConfig = ${JSON.stringify(firebaseConfig)};
+
+const app = initializeApp(firebaseConfig);
+
+const db = getFirestore(app);
+
+window.neoFirebase = {
+    db,
+    doc,
+    setDoc,
+    getDoc
+};
+
+window.dispatchEvent(
+    new Event("neoFirebaseReady")
+);
+`;
+
+document.head.appendChild(firebaseScript);
+
+
+/* ============================================================
+   GENEROWANIE KODU GRY
+   ============================================================ */
+
+function generateGameCode(){
+
+    const chars =
+        "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
+    let code = "";
+
+    for(let i=0;i<6;i++){
+
+        code +=
+            chars[
+                Math.floor(
+                    Math.random()*chars.length
+                )
+            ];
+    }
+
+    return code;
+}
+
+
+/* ============================================================
+   PUBLIKOWANIE GRY
+   ============================================================ */
+
+async function publishGame(){
+
+    if(!window.neoFirebase){
+
+        toast(
+            "Łączenie z Firebase..."
+        );
+
+        await new Promise(resolve => {
+
+            window.addEventListener(
+                "neoFirebaseReady",
+                resolve,
+                {once:true}
+            );
+
+        });
+    }
+
+
+    const name =
+        level.name.trim() ||
+        "Bez nazwy";
+
+
+    let code =
+        generateGameCode();
+
+
+    /*
+       Sprawdzamy, czy kod już istnieje.
+    */
+
+    let existing =
+        await window.neoFirebase.getDoc(
+            window.neoFirebase.doc(
+                window.neoFirebase.db,
+                "games",
+                code
+            )
+        );
+
+
+    while(existing.exists()){
+
+        code =
+            generateGameCode();
+
+        existing =
+            await window.neoFirebase.getDoc(
+                window.neoFirebase.doc(
+                    window.neoFirebase.db,
+                    "games",
+                    code
+                )
+            );
+    }
+
+
+    /*
+       Kopia poziomu.
+       Dzięki temu późniejsze zmiany
+       w edytorze nie zmieniają opublikowanej gry.
+    */
+
+    const gameData =
+        JSON.parse(
+            JSON.stringify(level)
+        );
+
+
+    await window.neoFirebase.setDoc(
+        window.neoFirebase.doc(
+            window.neoFirebase.db,
+            "games",
+            code
+        ),
+        {
+            name:name,
+            level:gameData,
+            createdAt:Date.now()
+        }
+    );
+
+
+    showGameCode(
+        code,
+        name
+    );
+}
+
+
+/* ============================================================
+   OKNO Z KODEM
+   ============================================================ */
+
+function showGameCode(
+    code,
+    name
+){
+
+    const modal =
+        document.createElement("div");
+
+    modal.style.position =
+        "fixed";
+
+    modal.style.inset =
+        "0";
+
+    modal.style.background =
+        "rgba(0,0,0,.7)";
+
+    modal.style.display =
+        "flex";
+
+    modal.style.alignItems =
+        "center";
+
+    modal.style.justifyContent =
+        "center";
+
+    modal.style.zIndex =
+        "9999";
+
+
+    const card =
+        document.createElement("div");
+
+    card.style.background =
+        "#1b2637";
+
+    card.style.color =
+        "white";
+
+    card.style.padding =
+        "30px";
+
+    card.style.borderRadius =
+        "14px";
+
+    card.style.width =
+        "min(420px,90vw)";
+
+    card.style.textAlign =
+        "center";
+
+
+    card.innerHTML = `
+
+        <h2>📢 Gra opublikowana!</h2>
+
+        <p>
+            ${escapeHTML(name)}
+        </p>
+
+        <div style="
+            font-size:38px;
+            font-weight:900;
+            letter-spacing:8px;
+            background:#101722;
+            padding:15px;
+            border-radius:10px;
+            margin:20px 0;
+        ">
+            ${code}
+        </div>
+
+        <p>
+            Udostępnij ten kod innym graczom.
+        </p>
+
+        <button id="copyGameCode"
+            style="
+                padding:10px 18px;
+                border-radius:7px;
+                background:#2d9c5a;
+                color:white;
+                margin-right:6px;
+            ">
+            📋 Kopiuj
+        </button>
+
+        <button id="closeGameCode"
+            style="
+                padding:10px 18px;
+                border-radius:7px;
+                background:#34445c;
+                color:white;
+            ">
+            Zamknij
+        </button>
+    `;
+
+
+    modal.appendChild(card);
+
+    document.body.appendChild(modal);
+
+
+    document
+    .getElementById("copyGameCode")
+    .onclick = async () => {
+
+        try{
+
+            await navigator.clipboard.writeText(
+                code
+            );
+
+            toast(
+                "Kod skopiowany"
+            );
+
+        }catch{
+
+            toast(
+                "Nie można skopiować"
+            );
+        }
+    };
+
+
+    document
+    .getElementById("closeGameCode")
+    .onclick = () => {
+
+        modal.remove();
+    };
+}
+
+
+/* ============================================================
+   ENTER GAME
+   ============================================================ */
+
+async function enterGameByCode(){
+
+    if(!window.neoFirebase){
+
+        toast(
+            "Łączenie z Firebase..."
+        );
+
+        await new Promise(resolve => {
+
+            window.addEventListener(
+                "neoFirebaseReady",
+                resolve,
+                {once:true}
+            );
+
+        });
+    }
+
+
+    const code =
+        prompt(
+            "Wpisz kod gry:"
+        );
+
+
+    if(!code)
+        return;
+
+
+    const cleanCode =
+        code
+        .trim()
+        .toUpperCase();
+
+
+    if(
+        !/^[A-Z0-9]{6}$/.test(
+            cleanCode
+        )
+    ){
+
+        toast(
+            "Nieprawidłowy kod"
+        );
+
+        return;
+    }
+
+
+    toast(
+        "Wczytywanie gry..."
+    );
+
+
+    try{
+
+        const snapshot =
+            await window.neoFirebase.getDoc(
+                window.neoFirebase.doc(
+                    window.neoFirebase.db,
+                    "games",
+                    cleanCode
+                )
+            );
+
+
+        if(!snapshot.exists()){
+
+            toast(
+                "Nie znaleziono gry"
+            );
+
+            return;
+        }
+
+
+        const data =
+            snapshot.data();
+
+
+        if(!data.level){
+
+            toast(
+                "Gra jest uszkodzona"
+            );
+
+            return;
+        }
+
+
+        level =
+            data.level;
+
+
+        selectedObject =
+            null;
+
+
+        history = [];
+
+        historyIndex = -1;
+
+
+        updateStats();
+
+        updateSelectedUI();
+
+
+        /*
+           Przechodzimy od razu do trybu gry.
+        */
+
+        enterPlay();
+
+
+        toast(
+            "Gra: "+
+            (
+                data.name ||
+                "Bez nazwy"
+            )
+        );
+
+
+    }catch(error){
+
+        console.error(
+            error
+        );
+
+        toast(
+            "Błąd Firebase"
+        );
+    }
+}
+
+
+/* ============================================================
+   BUTTONY
+   ============================================================ */
+
+document
+.getElementById(
+    "publishGameBtn"
+)
+.addEventListener(
+    "click",
+    publishGame
+);
+
+
+document
+.getElementById(
+    "enterGameBtn"
+)
+.addEventListener(
+    "click",
+    enterGameByCode
+);
 
 
 /* ============================================================
