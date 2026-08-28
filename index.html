@@ -613,6 +613,13 @@ textarea{
                     <div class="paletteText">Sprężyna</div>
                 </button>
 
+                <button
+    id="achievementBtn"
+    onclick="addAchievement()"
+>
+    🏆 Osiągnięcie
+</button>
+
                 <button class="paletteButton" data-tool="checkpoint">
                     <div class="paletteIcon">🚩</div>
                     <div class="paletteText">Checkpoint</div>
@@ -7527,6 +7534,127 @@ window.addEventListener(
 
     }
 );
+
+/* ============================================================
+   ACHIEVEMENTS SYSTEM
+   ============================================================ */
+
+const achievements = [];
+
+
+/* Dodawanie osiągnięcia */
+
+function addAchievement(){
+
+    const name = prompt(
+        "Nazwa osiągnięcia:"
+    );
+
+    if(!name)
+        return;
+
+
+    const description = prompt(
+        "Opis osiągnięcia:"
+    ) || "";
+
+
+    const condition = prompt(
+        "Warunek (np. collect_coin, finish_level, defeat_enemy):"
+    ) || "finish_level";
+
+
+    const achievement = {
+
+        id:
+            "achievement_" +
+            Date.now(),
+
+        name:
+            name,
+
+        description:
+            description,
+
+        condition:
+            condition,
+
+        unlocked:
+            false
+    };
+
+
+    achievements.push(
+        achievement
+    );
+
+
+    toast(
+        "🏆 Dodano osiągnięcie: " +
+        name
+    );
+}
+
+
+/* Sprawdzanie osiągnięć */
+
+function unlockAchievement(
+    id
+){
+
+    const achievement =
+        achievements.find(
+            a =>
+                a.id === id
+        );
+
+
+    if(
+        !achievement ||
+        achievement.unlocked
+    )
+        return;
+
+
+    achievement.unlocked =
+        true;
+
+
+    toast(
+        "🏆 Osiągnięcie zdobyte: " +
+        achievement.name
+    );
+}
+
+
+/* Automatyczne sprawdzanie warunków */
+
+function checkAchievements(
+    condition
+){
+
+    for(
+        const achievement
+        of achievements
+    ){
+
+        if(
+            achievement.unlocked
+        )
+            continue;
+
+
+        if(
+            achievement.condition ===
+            condition
+        ){
+
+            unlockAchievement(
+                achievement.id
+            );
+        }
+    }
+}
 
 
 /* ============================================================
